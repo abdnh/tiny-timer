@@ -20,8 +20,7 @@ struct timer {
 };
 
 void sec_to_hms(int sec, int *arr) {
-    /* convert 'sec' into hours, minutes, and seconds and store them in 'arr'.
-    Useful for displaying time in the format h:m:s */
+    /* convert 'sec' into hours, minutes, and seconds and store them in 'arr' */
 
     arr[0] = sec / 3600; /* hours */
     sec -= arr[0] * 3600;
@@ -31,8 +30,7 @@ void sec_to_hms(int sec, int *arr) {
 }
 
 static int hms_to_sec(char *str) {
-    /* convert 'str' to seconds ASSUMING 'str' holds a string with valid time
-       format (is_valid_time(str) returns 1) */
+    /* convert 'str' to seconds assuming 'str' holds a string with valid time format */
     int h;
     int m;
     int s;
@@ -41,8 +39,8 @@ static int hms_to_sec(char *str) {
 }
 
 static int inc_or_dec_timer(struct timer *t) {
-    /* increment or decrement timer pointed to by 't' by a second */
-    /* Returns 1 on success, 0 on failure */
+    /* increment or decrement timer pointed to by 't' by one second */
+    /* Returns 1 on success, 0 if the timer expired */
 
     if (t->current != t->to) {
         if (t->up && t->to > t->current) {
@@ -69,7 +67,7 @@ static int inc_or_dec_timer(struct timer *t) {
 
 static char time_str[9];
 static char current_time[9];
-static struct timer t;
+static struct timer timer;
 static int hms[3];  // to be filled with current time.
 
 #if defined(_WIN32)
@@ -97,7 +95,7 @@ static void play_alarm_linux(void *ptr) {
 static int timer_cb(Ihandle *ih) {
     Ihandle *from_time_label = IupGetAttributeHandle(ih, "FROM_TIME_LABEL");
 
-    if (!inc_or_dec_timer(&t)) {
+    if (!inc_or_dec_timer(&timer)) {
         IupSetAttribute(ih, "RUN", "NO");
         Ihandle *pr_button = IupGetDialogChild(ih, "PR_BUTTON");
         IupSetAttribute(pr_button, "ACTIVE", "NO");
@@ -111,7 +109,7 @@ static int timer_cb(Ihandle *ih) {
 #endif
 
     } else {
-        sec_to_hms(t.current, hms);
+        sec_to_hms(timer.current, hms);
         sprintf(current_time, "%02d:%02d:%02d", hms[0], hms[1], hms[2]);
         IupSetAttribute(from_time_label, "TITLE", current_time);
     }
@@ -173,7 +171,7 @@ static int on_start_button_click(Ihandle *ih) {
         atoi(IupGetAttribute(IupGetDialogChild(ih, "SECONDS_SPIN"), "VALUE"));
     sprintf(time_str, "%02d:%02d:%02d", hours, minutes, seconds);
 
-    Ihandle *timer = IupGetDialogChild(ih, "TIMER");
+    Ihandle *iup_timer = IupGetDialogChild(ih, "TIMER");
     Ihandle *timer_toggle = IupGetDialogChild(ih, "TIMER_TOGGLE");
     Ihandle *stopwatch_toggle = IupGetDialogChild(ih, "STOPWATCH_TOGGLE");
     Ihandle *countdown_toggle = IupGetDialogChild(ih, "COUNTDOWN_TOGGLE");
@@ -181,24 +179,24 @@ static int on_start_button_click(Ihandle *ih) {
     if (strcmp(IupGetAttribute(timer_toggle, "VALUE"), "ON") == 0) {
         IupSetAttribute(from_time_label, "TITLE", "00:00:00");
         IupSetAttribute(to_time_label, "TITLE", time_str);
-        t.current = 0;
-        t.to = hms_to_sec(time_str);
-        t.up = 1;
-        IupSetAttribute(timer, "RUN", "YES");
+        timer.current = 0;
+        timer.to = hms_to_sec(time_str);
+        timer.up = 1;
+        IupSetAttribute(iup_timer, "RUN", "YES");
     } else if (strcmp(IupGetAttribute(stopwatch_toggle, "VALUE"), "ON") == 0) {
         IupSetAttribute(from_time_label, "TITLE", "00:00:00");
         IupSetAttribute(to_time_label, "TITLE", "∞");
-        t.current = 0;
-        t.to = INT_MAX;
-        t.up = 1;
-        IupSetAttribute(timer, "RUN", "YES");
+        timer.current = 0;
+        timer.to = INT_MAX;
+        timer.up = 1;
+        IupSetAttribute(iup_timer, "RUN", "YES");
     } else if (strcmp(IupGetAttribute(countdown_toggle, "VALUE"), "ON") == 0) {
         IupSetAttribute(from_time_label, "TITLE", time_str);
         IupSetAttribute(to_time_label, "TITLE", "00:00:00");
-        t.current = hms_to_sec(time_str);
-        t.to = 0;
-        t.up = 0;
-        IupSetAttribute(timer, "RUN", "YES");
+        timer.current = hms_to_sec(time_str);
+        timer.to = 0;
+        timer.up = 0;
+        IupSetAttribute(iup_timer, "RUN", "YES");
     }
 
     Ihandle *pr_button = IupGetDialogChild(ih, "PR_BUTTON");
@@ -212,15 +210,15 @@ static int on_start_button_click(Ihandle *ih) {
 
 static int on_pr_button_click(Ihandle *ih) {
     Ihandle *pr_button = IupGetDialogChild(ih, "PR_BUTTON");
-    Ihandle *timer = IupGetDialogChild(ih, "TIMER");
+    Ihandle *iup_timer = IupGetDialogChild(ih, "TIMER");
 
     if (strcmp(IupGetAttribute(pr_button, "ACTIVE"), "YES") == 0) {
-        if (strcmp(IupGetAttribute(timer, "RUN"), "YES") == 0) {
-            IupSetAttribute(timer, "RUN", "NO");
+        if (strcmp(IupGetAttribute(iup_timer, "RUN"), "YES") == 0) {
+            IupSetAttribute(iup_timer, "RUN", "NO");
             IupSetAttribute(pr_button, "TITLE", "Resume");
-        } else if (strcmp(IupGetAttribute(timer, "RUN"), "NO") == 0) {
+        } else if (strcmp(IupGetAttribute(iup_timer, "RUN"), "NO") == 0) {
             IupSetAttribute(pr_button, "TITLE", "Pause");
-            IupSetAttribute(timer, "RUN", "YES");
+            IupSetAttribute(iup_timer, "RUN", "YES");
         }
 
         IupRefresh(ih);
@@ -301,18 +299,18 @@ int main(void) {
         IupHbox(IupFill(), start_button, pr_button, IupFill(), NULL);
     IupSetAttribute(buttons, "CGAP", "10");
 
-    Ihandle *timer = IupTimer();
-    IupSetAttribute(timer, "NAME", "TIMER");
+    Ihandle *iup_timer = IupTimer();
+    IupSetAttribute(iup_timer, "NAME", "TIMER");
     // we have to store from_time_label in timer because getting its handle
     // through IupGetDialogChild() returns a null pointer for some weird reason
-    IupSetAttributeHandle(timer, "FROM_TIME_LABEL", from_time_label);
-    IupSetAttribute(timer, "TIME", "1000");
-    IupSetCallback(timer, "ACTION_CB", (Icallback)timer_cb);
+    IupSetAttributeHandle(iup_timer, "FROM_TIME_LABEL", from_time_label);
+    IupSetAttribute(iup_timer, "TIME", "1000");
+    IupSetCallback(iup_timer, "ACTION_CB", (Icallback)timer_cb);
     /* time will not be mapped unless its RUN attribute is set or it is appended
    to a container So this zbox is just to map the timer so we can get its
    handle later.
 */
-    Ihandle *zbox = IupZbox(timer, NULL);
+    Ihandle *zbox = IupZbox(iup_timer, NULL);
 
     Ihandle *main_vbox =
         IupVbox(IupFill(), timer_status_hbox, toggles, to_from_label,
@@ -331,7 +329,7 @@ int main(void) {
     IupShowXY(main_dlg, IUP_CENTER, IUP_CENTER);
     IupMainLoop();
 
-    IupDestroy(timer);
+    IupDestroy(iup_timer);
     IupClose();
 
     return 0;
