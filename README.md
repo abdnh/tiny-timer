@@ -22,7 +22,6 @@ It should work on Windows and Linux, but I mostly used it on Windows.
 
 ## TODO
 - Make alarm in linux version persistent when the window is not focused
-- labels above the spinboxes
 
 ## Credit
 
