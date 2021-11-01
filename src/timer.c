@@ -259,6 +259,7 @@ int main(void) {
 
     Ihandle *toggles_hbox = IupHbox(IupFill(), timer_toggle, stopwatch_toggle,
                                     countdown_toggle, IupFill(), NULL);
+    IupSetAttribute(toggles_hbox, "CGAP", "10");
     Ihandle *toggles = IupRadio(toggles_hbox);
 
     Ihandle *to_from_label = IupLabel("To");
