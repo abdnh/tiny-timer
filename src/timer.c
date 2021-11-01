@@ -19,7 +19,7 @@ struct timer {
     int up;  // (to - current >= 0) ? 1 : 0; /* increment or decrement ? */
 };
 
-void sec_to_hms(int sec, int *arr) {
+static void sec_to_hms(int sec, int *arr) {
     /* convert 'sec' into hours, minutes, and seconds and store them in 'arr' */
 
     arr[0] = sec / 3600; /* hours */
@@ -30,7 +30,8 @@ void sec_to_hms(int sec, int *arr) {
 }
 
 static int hms_to_sec(char *str) {
-    /* convert 'str' to seconds assuming 'str' holds a string with valid time format */
+    /* convert 'str' to seconds assuming 'str' holds a string with valid time
+     * format */
     int h;
     int m;
     int s;
